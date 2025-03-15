@@ -10,28 +10,42 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * TODO: add description.
+ * Reads the scenario input file and creates a list of {@link MoveRequest} objects mapped to hours.
+ * Prime-time hours will contain more MoveRequest(s) to simulate busy hours.
+ * Each hour is divided into N slices of time to allow the elevator to process requests.
+ * An elevator will move M number of times per time slice.
  */
 public class ScenarioController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioController.class);
+    private static final int INTERVAL_COUNT = 5;
+
+    public static final short BASE_SLEEP_TIME_MS = 100;
+
+    private final ScenarioInput scenarioInput;
+    private final ElevatorController elevatorController;
+    private final FloorRequestController[] floorRequestController;
+    private final AtomicBoolean isScenarioRunning;
+
+    public ScenarioController() {
+        this.scenarioInput = readInput();
+        this.isScenarioRunning = new AtomicBoolean(false);
+        this.floorRequestController = new FloorRequestController[scenarioInput.constraints.floorCount()];
+        this.elevatorController = new ElevatorController(isScenarioRunning);
+    }
 
     /**
      * Parse scenario input file and create a list of PickupRequest objects.
      * @return simulated pickup requests.
      */
-    @SuppressWarnings("SameParameterValue")
-    private ScenarioInput readInput(String fileName) {
-        if (fileName.isBlank()) {
-            throw new IllegalArgumentException("File name cannot be null or empty.");
-        }
-
+    private ScenarioInput readInput() {
         // TreeMap is used to maintain the order of time slices.
         Map<Integer, List<MoveRequest>> moveRequests = new TreeMap<>();
         ScenarioConstraints constraints;
         String inputRegex = "\\s*,\\s*";
-        try (FileReader fileReader = new FileReader(Path.of(fileName).toFile())) {
+        try (FileReader fileReader = new FileReader(Path.of("src/main/resources/scenario.txt").toFile())) {
             BufferedReader br = new BufferedReader(fileReader);
 
             List<MoveRequest> requests;
@@ -97,14 +111,30 @@ public class ScenarioController {
      * Execute the scenario.
      */
     public void execute() {
-        ScenarioInput scenarioInput = readInput("src/main/resources/scenario.txt");
         LOGGER.debug("Scenario constraints: {}", scenarioInput.constraints);
+
+        isScenarioRunning.set(true);
+        elevatorController.start();
+
+        for (int i = 0; i < scenarioInput.constraints.floorCount(); i++) {
+            floorRequestController[i] = new FloorRequestController(i, isScenarioRunning);
+            floorRequestController[i].start();
+        }
     }
 
     /**
      * Shutdown the controller, joins all threads.
      */
     public void shutdown() {
-
+        isScenarioRunning.set(false);
+        try {
+            for (FloorRequestController controller : floorRequestController) {
+                controller.join();
+            }
+            elevatorController.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("Error shutting down controllers", e);
+        }
     }
 }
