@@ -17,6 +17,12 @@ import static org.example.controller.ScenarioController.INTERVAL_SLEEP_TIME_MS;
  * <p>
  * The elevator moves to the requested floor and updates its direction accordingly.
  * It also handles the unloading of occupants and manages the request queue.
+ * <p>
+ * Note:
+ *     It would be more accurate to have FloorRequestControllers to enable queues for each floor.
+ *     The Elevator would need a capacity, and the ElevatorService would need to account for elevator capacity before
+ *     assigning an Elevator. The ElevatorRequestController would only request as many MoveRequests from a FloorRequestController
+ *     as the elevator can handle.
  */
 public class ElevatorController extends Thread {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElevatorController.class);
@@ -118,6 +124,9 @@ public class ElevatorController extends Thread {
             move();
 
             try {
+                // Each interval sleep represents an hour, the interval sleep time is a subset of the hour.
+                // The sleeps could be adjusted to be more realistic, but this is a simulation for demonstration purposes.
+
                 //noinspection BusyWait
                 Thread.sleep(INTERVAL_SLEEP_TIME_MS/8);
             } catch (InterruptedException e) {

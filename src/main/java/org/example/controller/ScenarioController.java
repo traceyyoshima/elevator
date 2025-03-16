@@ -154,6 +154,8 @@ public class ScenarioController implements Runnable {
                 elevatorRequestController.queueRequests(requestsInTimeSlice);
 
                 try {
+                    // Each interval sleep represents an hour, the interval sleep time is a subset of the hour.
+                    // The sleeps could be adjusted to be more realistic, but this is a simulation for demonstration purposes.
                     Thread.sleep(INTERVAL_SLEEP_TIME_MS);
                 } catch (InterruptedException e) {
                     LOGGER.error("ScenarioController interrupted", e);

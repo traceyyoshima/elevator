@@ -8,6 +8,7 @@ import java.util.TreeSet;
 
 /**
  * Represents an elevator in the system.
+ * Assumes there is no capacity limit.
  */
 @Data
 public class Elevator {
