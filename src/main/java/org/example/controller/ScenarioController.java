@@ -1,7 +1,6 @@
 package org.example.controller;
 
 import org.example.ScenarioConstraints;
-import org.example.model.Elevator;
 import org.example.model.MoveRequest;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -23,23 +22,23 @@ public class ScenarioController implements Runnable {
     public static final short INTERVAL_SLEEP_TIME_MS = 100;
 
     private final ScenarioInput scenarioInput;
-    private final List<Elevator> elevators;
-    private final ElevatorController elevatorController;
+    private final List<ElevatorController> elevatorControllers;
+    private final ElevatorRequestController elevatorRequestController;
     private final AtomicBoolean isScenarioRunning;
 
     public ScenarioController() {
         this.scenarioInput = readInput();
         this.isScenarioRunning = new AtomicBoolean(false);
         // Adjusting the elevator count will show the effect on wait time during prime-time hours.
-        List<Elevator> elevators = new ArrayList<>(scenarioInput.constraints.elevatorCount());
+        List<ElevatorController> elevatorControllers = new ArrayList<>(scenarioInput.constraints.elevatorCount());
         for (int i = 0; i < scenarioInput.constraints.elevatorCount(); i++) {
-            Elevator elevator = new Elevator(i, scenarioInput.constraints.floorCount(), isScenarioRunning);
-            elevators.add(elevator);
+            ElevatorController elevatorController = new ElevatorController(i, scenarioInput.constraints.floorCount(), isScenarioRunning);
+            elevatorControllers.add(elevatorController);
         }
 
-        this.elevators = elevators.stream().toList();
-        this.elevatorController = new ElevatorController(
-                this.elevators,
+        this.elevatorControllers = elevatorControllers.stream().toList();
+        this.elevatorRequestController = new ElevatorRequestController(
+                this.elevatorControllers,
                 scenarioInput.constraints.costPerFloor(),
                 scenarioInput.constraints.costPerStop(),
                 isScenarioRunning);
@@ -131,9 +130,9 @@ public class ScenarioController implements Runnable {
         LOGGER.debug("Scenario constraints: {}", scenarioInput.constraints);
 
         isScenarioRunning.set(true);
-        elevatorController.start();
-        for (Elevator elevator : elevators) {
-            elevator.start();
+        elevatorRequestController.start();
+        for (ElevatorController elevatorController : elevatorControllers) {
+            elevatorController.start();
         }
 
         for (List<MoveRequest> value : scenarioInput.moveRequests().values()) {
@@ -150,7 +149,7 @@ public class ScenarioController implements Runnable {
                 }
 
                 List<MoveRequest> requestsInTimeSlice = value.subList(i, end);
-                elevatorController.queueRequests(requestsInTimeSlice);
+                elevatorRequestController.queueRequests(requestsInTimeSlice);
 
                 try {
                     Thread.sleep(INTERVAL_SLEEP_TIME_MS);
@@ -168,9 +167,9 @@ public class ScenarioController implements Runnable {
     public void shutdown() {
         isScenarioRunning.set(false);
         try {
-            elevatorController.join();
-            for (Elevator elevator : elevators) {
-                elevator.join();
+            elevatorRequestController.join();
+            for (ElevatorController elevatorController : elevatorControllers) {
+                elevatorController.join();
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -180,7 +179,7 @@ public class ScenarioController implements Runnable {
     @Override
     public void run() {
         execute();
-        while (!elevatorController.isDone()) {
+        while (!elevatorRequestController.isDone()) {
             try {
                 //noinspection BusyWait
                 Thread.sleep(INTERVAL_SLEEP_TIME_MS * 2);
