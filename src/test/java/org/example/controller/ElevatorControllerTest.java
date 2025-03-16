@@ -1,6 +1,5 @@
-package controller;
+package org.example.controller;
 
-import org.example.controller.ElevatorController;
 import org.example.model.Direction;
 import org.example.model.MoveRequest;
 import org.junit.jupiter.api.BeforeEach;
