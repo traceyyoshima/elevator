@@ -9,6 +9,9 @@ import java.util.TreeSet;
 /**
  * Represents an elevator in the system.
  * Assumes there is no capacity limit.
+ * <p>
+ * I focused on the simulation aspect, because information on elevator modeling is available online.
+ * I.E., Hallway Buttons, Hallway Displays, Cabin Buttons, Cabin Displays, are not modeled.
  */
 @Data
 public class Elevator {

@@ -4,6 +4,9 @@ import org.example.controller.ScenarioController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The elevator simulation could be represented as microservices, but it seems overkill for an exercise.
+ */
 public class ElevatorApplication {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElevatorApplication.class);
 
