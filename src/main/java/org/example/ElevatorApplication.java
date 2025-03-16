@@ -12,8 +12,8 @@ public class ElevatorApplication {
         LOGGER.info("Starting elevator simulation");
 
         ScenarioController scenarioController = new ScenarioController();
-        scenarioController.execute();
-        scenarioController.shutdown();
+        scenarioController.run();
+
         LOGGER.info("Elevator simulation finished");
         LOGGER.info("********************************************************************");
     }

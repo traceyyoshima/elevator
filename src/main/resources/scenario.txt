@@ -1,5 +1,5 @@
-# number of floors, number of elevators, elevator capacity, requests per time slice
-10, 2, 8, 47
+# number of floors, number of elevators, elevator capacity, cost per floor, cost per stop, requests per time slice
+10, 4, 8, 3, 10, 47
 1, 0, 0
 1, 1, 7
 1, 0, 0

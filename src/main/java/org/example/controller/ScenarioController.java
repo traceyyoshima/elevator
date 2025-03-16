@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import org.example.ScenarioConstraints;
+import org.example.model.Elevator;
 import org.example.model.MoveRequest;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -18,22 +19,33 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Each hour is divided into N slices of time to allow the elevator to process requests.
  * An elevator will move M number of times per time slice.
  */
-public class ScenarioController {
+public class ScenarioController implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioController.class);
     private static final int INTERVAL_COUNT = 5;
 
-    public static final short BASE_SLEEP_TIME_MS = 100;
+    public static final short INTERVAL_SLEEP_TIME_MS = 100;
 
     private final ScenarioInput scenarioInput;
+    private final List<Elevator> elevators;
     private final ElevatorController elevatorController;
-    private final FloorRequestController[] floorRequestController;
     private final AtomicBoolean isScenarioRunning;
 
     public ScenarioController() {
         this.scenarioInput = readInput();
         this.isScenarioRunning = new AtomicBoolean(false);
-        this.floorRequestController = new FloorRequestController[scenarioInput.constraints.floorCount()];
-        this.elevatorController = new ElevatorController(isScenarioRunning);
+        // Adjusting the elevator count will show the effect on wait time during prime-time hours.
+        List<Elevator> elevators = new ArrayList<>(scenarioInput.constraints.elevatorCount());
+        for (int i = 0; i < scenarioInput.constraints.elevatorCount(); i++) {
+            Elevator elevator = new Elevator(i, scenarioInput.constraints.floorCount(), isScenarioRunning);
+            elevators.add(elevator);
+        }
+
+        this.elevators = elevators.stream().toList();
+        this.elevatorController = new ElevatorController(
+                this.elevators,
+                scenarioInput.constraints.costPerFloor(),
+                scenarioInput.constraints.costPerStop(),
+                isScenarioRunning);
     }
 
     /**
@@ -59,7 +71,7 @@ public class ScenarioController {
             }
             String[] inputValues = line.trim().split(inputRegex);
             Integer[] parsed = convertToIntArray(inputValues);
-            constraints = new ScenarioConstraints(parsed[0], parsed[1], parsed[2], parsed[3]);
+            constraints = new ScenarioConstraints(parsed[0], parsed[1], parsed[2], parsed[3], parsed[4], parsed[5]);
             line = br.readLine();
             while (line != null) {
                 inputValues = line.trim().split(inputRegex);
@@ -115,10 +127,32 @@ public class ScenarioController {
 
         isScenarioRunning.set(true);
         elevatorController.start();
+        for (Elevator elevator : elevators) {
+            elevator.start();
+        }
 
-        for (int i = 0; i < scenarioInput.constraints.floorCount(); i++) {
-            floorRequestController[i] = new FloorRequestController(i, isScenarioRunning);
-            floorRequestController[i].start();
+        for (List<MoveRequest> value : scenarioInput.moveRequests().values()) {
+            int size = value.size();
+            int interval = (int) Math.ceil((double) size / INTERVAL_COUNT);
+
+            for (int i = 0; i < INTERVAL_COUNT; i++) {
+                int start = i * interval;
+                int end = Math.min(start + interval, size);
+
+                if (start >= size) {
+                    break;
+                }
+
+                List<MoveRequest> requestsInTimeSlice = value.subList(i, end);
+                elevatorController.queueRequests(requestsInTimeSlice);
+
+                try {
+                    Thread.sleep(INTERVAL_SLEEP_TIME_MS);
+                } catch (InterruptedException e) {
+                    LOGGER.error("ScenarioController interrupted", e);
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
     }
 
@@ -128,13 +162,27 @@ public class ScenarioController {
     public void shutdown() {
         isScenarioRunning.set(false);
         try {
-            for (FloorRequestController controller : floorRequestController) {
-                controller.join();
-            }
             elevatorController.join();
+            for (Elevator elevator : elevators) {
+                elevator.join();
+            }
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOGGER.error("Error shutting down controllers", e);
+            throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void run() {
+        execute();
+        while (!elevatorController.isDone()) {
+            try {
+                //noinspection BusyWait
+                Thread.sleep(INTERVAL_SLEEP_TIME_MS * 2);
+            } catch (InterruptedException e) {
+                LOGGER.error("ScenarioController interrupted", e);
+                Thread.currentThread().interrupt();
+            }
+        }
+        shutdown();
     }
 }

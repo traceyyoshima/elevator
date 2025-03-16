@@ -33,6 +33,6 @@ public record MoveRequest(int currentFloor, int targetFloor) {
 
     @Override
     public String toString() {
-        return "MoveRequest { currentFloor=" + currentFloor + " targetFloor=" + targetFloor + "}";
+        return "MoveRequest { currentFloor=" + currentFloor + " targetFloor=" + targetFloor + " }";
     }
 }
