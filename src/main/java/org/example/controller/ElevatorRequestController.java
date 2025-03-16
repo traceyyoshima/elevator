@@ -26,10 +26,10 @@ public class ElevatorRequestController extends Thread {
     private final List<ElevatorController> elevatorControllers;
     private final AtomicBoolean isScenarioRunning;
 
-    public ElevatorRequestController(List<ElevatorController> elevatorControllers,
+    public ElevatorRequestController(@NotNull List<ElevatorController> elevatorControllers,
                                      int costPerFloor,
                                      int costPerStop,
-                                     AtomicBoolean isScenarioRunning) {
+                                     @NotNull AtomicBoolean isScenarioRunning) {
         this.elevatorControllers = elevatorControllers;
         this.isScenarioRunning = isScenarioRunning;
         this.elevatorControllerService = new ElevatorControllerService(costPerFloor, costPerStop);
@@ -40,7 +40,7 @@ public class ElevatorRequestController extends Thread {
      * Adds all non-no-op requests to the controller queue.
      * @param requests the list of requests to add.
      */
-    public void queueRequests(List<MoveRequest> requests) {
+    public void queueRequests(@NotNull List<MoveRequest> requests) {
         controllerQueue.addAll(requests.stream().filter(request -> request.getDirection() != Direction.NONE).toList());
     }
 

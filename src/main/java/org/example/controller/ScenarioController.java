@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import lombok.Value;
 import org.example.ScenarioConstraints;
 import org.example.model.MoveRequest;
 import org.jetbrains.annotations.NotNull;
@@ -15,16 +16,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Simulate the scenario.
  */
+@Value
 public class ScenarioController implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioController.class);
     private static final int INTERVAL_COUNT = 5;
 
     public static final short INTERVAL_SLEEP_TIME_MS = 100;
 
-    private final ScenarioInput scenarioInput;
-    private final List<ElevatorController> elevatorControllers;
-    private final ElevatorRequestController elevatorRequestController;
-    private final AtomicBoolean isScenarioRunning;
+    ScenarioInput scenarioInput;
+    List<ElevatorController> elevatorControllers;
+    ElevatorRequestController elevatorRequestController;
+    AtomicBoolean isScenarioRunning;
 
     public ScenarioController() {
         this.scenarioInput = readInput();
@@ -57,7 +59,7 @@ public class ScenarioController implements Runnable {
      *
      * @return {@link ScenarioInput}.
      */
-    private ScenarioInput readInput() {
+    private @NotNull ScenarioInput readInput() {
         // TreeMap is used to maintain the order of time slices.
         Map<Integer, List<MoveRequest>> moveRequests = new TreeMap<>();
         ScenarioConstraints constraints;
@@ -107,7 +109,7 @@ public class ScenarioController implements Runnable {
      * @param inputValues the input string array.
      * @return the converted integer array.
      */
-    private Integer[] convertToIntArray(String[] inputValues) {
+    private @NotNull Integer[] convertToIntArray(@NotNull String[] inputValues) {
         Integer[] parsed = new Integer[inputValues.length];
         for (int i = 0; i < inputValues.length; i++) {
             try {

@@ -51,7 +51,7 @@ public class ElevatorControllerService {
      * @param elevatorController the elevator to calculate the cost for.
      * @return the cost of the move request for the elevator.
      */
-    private double getCost(@NotNull MoveRequest request, ElevatorController elevatorController) {
+    private double getCost(@NotNull MoveRequest request, @NotNull ElevatorController elevatorController) {
         int floorsAway = Math.abs(elevatorController.getElevator().getCurrentFloor() - request.currentFloor());
         double cost = (double) floorsAway * costPerFloor + costPerStop;
         // Distribute the requests across the elevators.

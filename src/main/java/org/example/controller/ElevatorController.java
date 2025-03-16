@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.example.model.Direction;
 import org.example.model.Elevator;
 import org.example.model.MoveRequest;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,9 @@ public class ElevatorController extends Thread {
     @Getter
     private final Elevator elevator;
 
-    public ElevatorController(int elevatorId, int topFloor, AtomicBoolean isScenarioRunning) {
+    public ElevatorController(int elevatorId,
+                              int topFloor,
+                              @NotNull AtomicBoolean isScenarioRunning) {
         this.elevator = new Elevator(elevatorId);
         this.topFloor = topFloor;
         this.isScenarioRunning = isScenarioRunning;
@@ -37,7 +40,7 @@ public class ElevatorController extends Thread {
      * Method assumes requests are validated beforehand.
      * @param request the request to add.
      */
-    public void queueRequest(MoveRequest request) {
+    public void queueRequest(@NotNull MoveRequest request) {
         // Send the elevator to the requests current floor.
         if (elevator.getCurrentFloor() < request.currentFloor()) {
             elevator.getUpQueue().add(request.currentFloor());
@@ -58,7 +61,7 @@ public class ElevatorController extends Thread {
     /**
      * Moves the elevator if applicable, unloads occupants, and updates the direction.
      */
-    public Direction move() {
+    public @NotNull Direction move() {
         if (elevator.getDirection() == Direction.UP) {
             if (elevator.getCurrentFloor() < elevator.getUpQueue().first() && elevator.getCurrentFloor() < topFloor) {
                 LOGGER.info("    Elevator id {}: Moving UP to floor [{}]", elevator.getElevatorId(), elevator.getCurrentFloor() + 1);
