@@ -43,6 +43,10 @@ public class Elevator extends Thread {
         this.isScenarioRunning = isScenarioRunning;
     }
 
+    /**
+     * Adds a request to the elevator's queue.
+     * @param request the request to add.
+     */
     public void queueRequest(MoveRequest request) {
         if (currentFloor < request.currentFloor()) {
             upQueue.add(request.currentFloor());
@@ -59,6 +63,9 @@ public class Elevator extends Thread {
         }
     }
 
+    /**
+     * Moves the elevator if applicable, unloads occupants, and updates the direction.
+     */
     public Direction move() {
         if (direction == Direction.UP) {
             if (currentFloor < upQueue.first() && currentFloor < topFloor) {
@@ -96,6 +103,11 @@ public class Elevator extends Thread {
                     queueRequest(new MoveRequest(currentFloor, 1));
                 }
             }
+            if (direction == Direction.UP) {
+                currentFloor++;
+            } else if (direction == Direction.DOWN) {
+                currentFloor--;
+            }
         }
         return direction;
     }
@@ -108,7 +120,7 @@ public class Elevator extends Thread {
 
             try {
                 //noinspection BusyWait
-                Thread.sleep(INTERVAL_SLEEP_TIME_MS/4);
+                Thread.sleep(INTERVAL_SLEEP_TIME_MS/8);
             } catch (InterruptedException e) {
                 LOGGER.error("Elevator id {}: interrupted", elevatorId, e);
                 Thread.currentThread().interrupt();

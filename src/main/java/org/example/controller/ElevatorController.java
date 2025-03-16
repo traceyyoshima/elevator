@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.example.controller.ScenarioController.INTERVAL_SLEEP_TIME_MS;
 
 /**
- * Process floor move requests, and calculate the best elevator to serve the request.
+ * Process move requests and control interactions with the request queue.
  */
 public class ElevatorController extends Thread {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElevatorController.class);
@@ -45,6 +45,9 @@ public class ElevatorController extends Thread {
         controllerQueue.addAll(requests.stream().filter(request -> request.getDirection() != Direction.NONE).toList());
     }
 
+    /**
+     * @return true if all requests have been processed, false otherwise.
+     */
     public boolean isDone() {
         if (!controllerQueue.isEmpty()) {
             return false;

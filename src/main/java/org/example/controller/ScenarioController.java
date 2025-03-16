@@ -14,10 +14,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Reads the scenario input file and creates a list of {@link MoveRequest} objects mapped to hours.
- * Prime-time hours will contain more MoveRequest(s) to simulate busy hours.
- * Each hour is divided into N slices of time to allow the elevator to process requests.
- * An elevator will move M number of times per time slice.
+ * Simulate the scenario.
  */
 public class ScenarioController implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioController.class);
@@ -49,8 +46,17 @@ public class ScenarioController implements Runnable {
     }
 
     /**
-     * Parse scenario input file and create a list of PickupRequest objects.
-     * @return simulated pickup requests.
+     * Parse scenario input file and map the into {@link ScenarioInput}.
+     *<p>
+     * The scenario input file should be in the following format:
+     * # header
+     * # constraints
+     * # timeSlice, floor, destination
+     *<p>
+     * Each time slice represents an hour, and the current floor and destination of a request.
+     * No-op requests (current floor and destination are equal to 0) are randomly spread throughout each hour to simulate a real-world scenario.
+     *
+     * @return {@link ScenarioInput}.
      */
     private ScenarioInput readInput() {
         // TreeMap is used to maintain the order of time slices.
@@ -84,6 +90,8 @@ public class ScenarioController implements Runnable {
                 if (currentTimeSlice != timeSlice) {
                     currentTimeSlice = timeSlice;
                 }
+
+                // No-op requests are not filtered out during parsing, so that the intervals will have a random distribution.
                 requests = moveRequests.computeIfAbsent(currentTimeSlice, _ -> new ArrayList<>());
                 requests.add(new MoveRequest(floor, destination));
                 line = br.readLine();
@@ -112,9 +120,6 @@ public class ScenarioController implements Runnable {
         return parsed;
     }
 
-    /**
-     * Represents the input for the scenario, including constraints and move requests.
-     */
     private record ScenarioInput(@NotNull ScenarioConstraints constraints,
                                  @NotNull Map<Integer, List<MoveRequest>> moveRequests) {
     }
@@ -135,6 +140,7 @@ public class ScenarioController implements Runnable {
             int size = value.size();
             int interval = (int) Math.ceil((double) size / INTERVAL_COUNT);
 
+            // Each hour is split into intervals to simulate ebs and flows of requests.
             for (int i = 0; i < INTERVAL_COUNT; i++) {
                 int start = i * interval;
                 int end = Math.min(start + interval, size);

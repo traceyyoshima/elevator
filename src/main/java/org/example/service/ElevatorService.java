@@ -57,6 +57,8 @@ public class ElevatorService {
             throw new IllegalArgumentException("No-op move requests are not supported");
         }
 
-        return elevator.getDirection() == Direction.NONE || elevator.getDirection() == moveRequest.getDirection();
+        return elevator.getDirection() == Direction.NONE ||
+                (moveRequest.getDirection() == Direction.UP && elevator.getCurrentFloor() <= moveRequest.currentFloor()) ||
+                (moveRequest.getDirection() == Direction.DOWN && elevator.getCurrentFloor() >= moveRequest.currentFloor());
     }
 }
